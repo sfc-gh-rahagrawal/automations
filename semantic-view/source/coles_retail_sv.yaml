@@ -1,7 +1,8 @@
 name: COLES_RETAIL_SEMANTIC_MODEL
-description: Coles Retail semantic view with sentiment analysis for Cortex Analyst
+description: "Coles Retail Analytics - sales, reviews, sentiment, store operations, and supply chain alerts."
 tables:
   - name: INVENTORY_ALERTS
+    description: Inventory alerts for stock issues across stores.
     base_table:
       database: COLES_RETAIL_DB
       schema: SUPPLY_CHAIN
@@ -11,21 +12,18 @@ tables:
         - ALERT_ID
     dimensions:
       - name: ALERT_TYPE
+        description: "Alert type: Low Stock, Out of Stock, Overstock, Expiring Soon."
         expr: alert_type
         data_type: VARCHAR(30)
         access_modifier: public_access
     facts:
       - name: CURRENT_STOCK
-        synonyms:
-          - stock level
-          - inventory
+        description: Current stock quantity on hand.
         expr: current_stock
         data_type: "NUMBER(38,0)"
         access_modifier: public_access
   - name: PRODUCTS
-    synonyms:
-      - product
-      - item
+    description: "Product master. PRODUCT_CATEGORY = Dairy, Bakery, Beverages, Cereals, Frozen, Household, Meat, Pantry, Produce. BRAND = supplier/brand."
     base_table:
       database: COLES_RETAIL_DB
       schema: AI_ANALYTICS
@@ -35,27 +33,33 @@ tables:
         - MERCH_ID
     dimensions:
       - name: BRAND
+        description: Brand or supplier name.
         expr: BRAND
         data_type: VARCHAR(100)
         access_modifier: public_access
       - name: CATEGORY
-        synonyms:
-          - product category
-          - department
+        description: "Product category: Dairy, Bakery, Beverages, Cereals, Frozen, Household, Meat, Pantry, Produce."
         expr: PRODUCT_CATEGORY
         data_type: VARCHAR(134217728)
         access_modifier: public_access
+        is_enum: true
+        sample_values:
+          - Dairy
+          - Bakery
+          - Beverages
+          - Cereals
+          - Frozen
+          - Household
+          - Meat
+          - Pantry
+          - Produce
       - name: PRODUCT_NAME
-        synonyms:
-          - product
-          - item
+        description: "Full product name, e.g. Full Cream Milk 2L."
         expr: ITEM_DESC
         data_type: VARCHAR(200)
         access_modifier: public_access
   - name: REVIEWS
-    synonyms:
-      - feedback
-      - ratings
+    description: Customer reviews with 1-5 star ratings and free-text feedback. store_location has short names like Melbourne CBD.
     base_table:
       database: COLES_RETAIL_DB
       schema: MARKETING
@@ -65,57 +69,42 @@ tables:
         - REVIEW_ID
     dimensions:
       - name: PRODUCT_CATEGORY
-        synonyms:
-          - reviewed category
+        description: Product category of the reviewed item.
         expr: product_category
         data_type: VARCHAR(50)
         access_modifier: public_access
       - name: REVIEW_PERIOD
-        synonyms:
-          - review month
-          - review period
+        description: Review month YYYY-MM.
         expr: "TO_CHAR(review_date, 'YYYY-MM')"
         data_type: VARCHAR(134217728)
         access_modifier: public_access
       - name: REVIEW_TEXT
-        synonyms:
-          - feedback text
-          - customer feedback
-          - review comment
+        description: Free-text customer review content.
         expr: review_text
         data_type: VARCHAR(2000)
         access_modifier: public_access
       - name: STORE_LOCATION
-        synonyms:
-          - review location
-          - review store location
+        description: "Short store name in reviews, e.g. Melbourne CBD (no Coles prefix)."
         expr: store_location
         data_type: VARCHAR(50)
         access_modifier: public_access
     facts:
       - name: RATING
-        synonyms:
-          - star rating
-          - score
+        description: Customer review rating 1-5 stars.
         expr: rating
         data_type: "NUMBER(38,0)"
         access_modifier: public_access
     metrics:
       - name: AVG_RATING
-        synonyms:
-          - average rating
+        description: Average review rating 1-5.
         expr: AVG(reviews.rating)
         access_modifier: public_access
       - name: REVIEW_COUNT
-        synonyms:
-          - number of reviews
+        description: Total number of reviews.
         expr: COUNT(reviews.REVIEW_ID)
         access_modifier: public_access
   - name: REVIEW_SENTIMENT
-    synonyms:
-      - sentiment
-      - customer sentiment
-      - review sentiment
+    description: "AI sentiment per review aspect (product_quality, value, freshness, service, store_cleanliness, parking). Values: positive, negative, neutral, mixed, unknown."
     base_table:
       database: COLES_RETAIL_DB
       schema: MARKETING
@@ -126,57 +115,58 @@ tables:
         - SENTIMENT_CATEGORY
     dimensions:
       - name: REVIEW_MONTH
-        synonyms:
-          - sentiment month
+        description: Sentiment review month YYYY-MM.
         expr: "TO_CHAR(review_sentiment.REVIEW_DATE, 'YYYY-MM')"
         data_type: VARCHAR(134217728)
         access_modifier: public_access
       - name: SENTIMENT
-        synonyms:
-          - sentiment type
-          - sentiment value
+        description: "Sentiment: positive, negative, neutral, mixed, unknown."
         expr: sentiment
         data_type: VARCHAR(134217728)
         access_modifier: public_access
+        is_enum: true
+        sample_values:
+          - positive
+          - negative
+          - neutral
+          - mixed
+          - unknown
       - name: SENTIMENT_CATEGORY
-        synonyms:
-          - aspect
-          - sentiment aspect
+        description: "Aspect: product_quality, value, freshness, service, store_cleanliness, parking."
         expr: sentiment_category
         data_type: VARCHAR(134217728)
         access_modifier: public_access
+        is_enum: true
+        sample_values:
+          - product_quality
+          - value
+          - freshness
+          - service
+          - store_cleanliness
+          - parking
     metrics:
       - name: MIXED_COUNT
-        synonyms:
-          - mixed reviews
+        description: Mixed sentiment count.
         expr: COUNT(CASE WHEN review_sentiment.sentiment = 'mixed' THEN 1 END)
         access_modifier: public_access
       - name: NEGATIVE_COUNT
-        synonyms:
-          - negative reviews
-          - negative sentiment count
+        description: Negative sentiment count.
         expr: COUNT(CASE WHEN review_sentiment.sentiment = 'negative' THEN 1 END)
         access_modifier: public_access
       - name: NEUTRAL_COUNT
-        synonyms:
-          - neutral reviews
+        description: Neutral sentiment count.
         expr: COUNT(CASE WHEN review_sentiment.sentiment = 'neutral' THEN 1 END)
         access_modifier: public_access
       - name: POSITIVE_COUNT
-        synonyms:
-          - positive reviews
-          - positive sentiment count
+        description: Positive sentiment count.
         expr: COUNT(CASE WHEN review_sentiment.sentiment = 'positive' THEN 1 END)
         access_modifier: public_access
       - name: SENTIMENT_COUNT
-        synonyms:
-          - total sentiment reviews
+        description: Total sentiment entries.
         expr: COUNT(review_sentiment.REVIEW_ID)
         access_modifier: public_access
   - name: SALES
-    synonyms:
-      - transactions
-      - orders
+    description: Sales transactions. NET_AMT is AFTER discounts — do NOT subtract DISC_AMT. MARGIN_AMT is gross profit.
     base_table:
       database: COLES_RETAIL_DB
       schema: RETAIL
@@ -186,77 +176,74 @@ tables:
         - TXN_ID
     dimensions:
       - name: CUSTOMER_SEGMENT
-        synonyms:
-          - customer type
+        description: Customer segment.
         expr: SEG_CDE
         data_type: VARCHAR(50)
         access_modifier: public_access
+        is_enum: true
+        sample_values:
+          - Budget
+          - Convenience
+          - Families
+          - Health Conscious
+          - Premium
+          - Regular
       - name: PAYMENT_METHOD
-        synonyms:
-          - payment type
+        description: Payment method.
         expr: TENDER_CDE
         data_type: VARCHAR(20)
         access_modifier: public_access
+        is_enum: true
+        sample_values:
+          - Card
+          - Cash
+          - Mobile
       - name: SALE_PERIOD
-        synonyms:
-          - sale period
+        description: Sales month YYYY-MM for monthly trends.
         expr: "TO_CHAR(INV_DT, 'YYYY-MM')"
         data_type: VARCHAR(134217728)
         access_modifier: public_access
       - name: TRANSACTION_DATE
-        synonyms:
-          - sale date
+        description: Date of the sales transaction.
         expr: INV_DT
         data_type: DATE
         access_modifier: public_access
     facts:
       - name: DISCOUNT_AMOUNT
-        synonyms:
-          - discount
+        description: "Discount already applied to NET_AMT. Breakdown field, not additional deduction."
         expr: DISC_AMT
         data_type: "NUMBER(10,2)"
         access_modifier: public_access
       - name: GROSS_PROFIT
-        synonyms:
-          - profit
+        description: Gross profit margin (revenue minus COGS).
         expr: MARGIN_AMT
         data_type: "NUMBER(10,2)"
         access_modifier: public_access
       - name: QUANTITY
-        synonyms:
-          - units sold
-          - qty
+        description: Units sold in the transaction.
         expr: UNIT_CNT
         data_type: "NUMBER(38,0)"
         access_modifier: public_access
       - name: TOTAL_SALES
-        synonyms:
-          - revenue
-          - sales amount
+        description: Net sales after discounts. Do NOT subtract DISC_AMT.
         expr: NET_AMT
         data_type: "NUMBER(10,2)"
         access_modifier: public_access
     metrics:
       - name: REVENUE
-        synonyms:
-          - total revenue
+        description: Total net revenue after discounts.
         expr: SUM(sales.total_sales)
         access_modifier: public_access
       - name: TOTAL_PROFIT
-        synonyms:
-          - profit
+        description: Total gross profit.
         expr: SUM(sales.gross_profit)
         access_modifier: public_access
       - name: UNITS_SOLD
-        synonyms:
-          - total units
+        description: Total units sold.
         expr: SUM(sales.quantity)
         access_modifier: public_access
   - name: STORES
-    synonyms:
-      - store
-      - location
-      - branch
+    description: "Store dimension with 10 Coles locations. LOC_NM = full store name (e.g. Coles Melbourne CBD). FMT_CDE = format: Metro, Mall, Suburban."
     base_table:
       database: COLES_RETAIL_DB
       schema: AI_ANALYTICS
@@ -266,29 +253,32 @@ tables:
         - LOC_ID
     dimensions:
       - name: CITY_NAME
+        description: City of the store.
         expr: CITY_NM
         data_type: VARCHAR(100)
         access_modifier: public_access
       - name: STATE
-        synonyms:
-          - region
+        description: "Australian state: VIC, NSW, QLD, WA, SA, TAS."
         expr: ST_CDE
         data_type: VARCHAR(50)
         access_modifier: public_access
       - name: STORE_NAME
-        synonyms:
-          - store
-          - location
+        description: "Full store name, e.g. Coles Melbourne CBD."
         expr: LOC_NM
         data_type: VARCHAR(100)
         access_modifier: public_access
       - name: STORE_TYPE
-        synonyms:
-          - format
+        description: "Store format: Metro, Mall, or Suburban."
         expr: FMT_CDE
         data_type: VARCHAR(50)
         access_modifier: public_access
+        is_enum: true
+        sample_values:
+          - Metro
+          - Mall
+          - Suburban
   - name: STORE_PERFORMANCE
+    description: "Daily store performance: revenue, transactions, basket size, foot traffic, conversion rate."
     base_table:
       database: COLES_RETAIL_DB
       schema: RETAIL
@@ -298,35 +288,27 @@ tables:
         - PERFORMANCE_ID
     facts:
       - name: FOOT_TRAFFIC
-        synonyms:
-          - visitors
-          - traffic
+        description: Customer visit count for a store on a given day.
         expr: foot_traffic
         data_type: "NUMBER(38,0)"
         access_modifier: public_access
       - name: TOTAL_REVENUE
-        synonyms:
-          - daily sales
-          - store revenue
+        description: Total daily revenue for a store.
         expr: total_revenue
         data_type: "NUMBER(12,2)"
         access_modifier: public_access
       - name: TOTAL_TRANSACTIONS
-        synonyms:
-          - transaction count
+        description: Total transactions at a store on a given day.
         expr: total_transactions
         data_type: "NUMBER(38,0)"
         access_modifier: public_access
     metrics:
       - name: TOTAL_VISITORS
-        synonyms:
-          - visitors
+        description: Total foot traffic.
         expr: SUM(store_performance.foot_traffic)
         access_modifier: public_access
   - name: SUPPLIERS
-    synonyms:
-      - supplier
-      - vendor
+    description: "Supplier dimension with vendor details, country, reliability scores, and organic certification."
     base_table:
       database: COLES_RETAIL_DB
       schema: SUPPLY_CHAIN
@@ -336,19 +318,17 @@ tables:
         - SUPPLIER_ID
     dimensions:
       - name: COUNTRY
+        description: Supplier country of origin.
         expr: country
         data_type: VARCHAR(50)
         access_modifier: public_access
       - name: SUPPLIER_NAME
-        synonyms:
-          - supplier
+        description: Supplier company name.
         expr: supplier_name
         data_type: VARCHAR(200)
         access_modifier: public_access
   - name: SUPPORT_TICKETS
-    synonyms:
-      - complaints
-      - tickets
+    description: "Support tickets with AI-classified categories. Priority: CRITICAL, HIGH, MEDIUM, LOW."
     base_table:
       database: COLES_RETAIL_DB
       schema: MARKETING
@@ -358,29 +338,28 @@ tables:
         - TICKET_ID
     dimensions:
       - name: AI_CATEGORY
-        synonyms:
-          - complaint category
-          - issue category
+        description: AI-classified complaint category.
         expr: ai_category
         data_type: VARCHAR(50)
         access_modifier: public_access
       - name: PRIORITY
-        synonyms:
-          - urgency
+        description: "Ticket priority: CRITICAL, HIGH, MEDIUM, LOW."
         expr: priority
         data_type: VARCHAR(20)
         access_modifier: public_access
+        is_enum: true
+        sample_values:
+          - CRITICAL
+          - HIGH
+          - MEDIUM
+          - LOW
       - name: TICKET_STATUS
-        synonyms:
-          - ticket status
+        description: "Ticket status: Open, In Progress, Resolved, Closed."
         expr: '"STATUS"'
         data_type: VARCHAR(20)
         access_modifier: public_access
   - name: TIME_DIM
-    synonyms:
-      - date
-      - calendar
-      - time
+    description: "Calendar dimension with daily grain, 5 years (2023-2027). Use for date filtering, fiscal periods, and seasonal trends."
     base_table:
       database: COLES_RETAIL_DB
       schema: CORE
@@ -390,244 +369,195 @@ tables:
         - DATE_KEY
     dimensions:
       - name: DATE_KEY
-        synonyms:
-          - date
-          - day
+        description: Calendar date.
         expr: date_key
         data_type: DATE
         access_modifier: public_access
       - name: DAY_NAME
-        synonyms:
-          - weekday
-          - day of week
+        description: "Day name: Monday, Tuesday, etc."
         expr: day_name
         data_type: VARCHAR(10)
         access_modifier: public_access
       - name: FISCAL_QUARTER
-        synonyms:
-          - fq
+        description: Coles fiscal quarter 1-4.
         expr: fiscal_quarter
         data_type: "NUMBER(38,0)"
         access_modifier: public_access
       - name: FISCAL_YEAR
-        synonyms:
-          - fy
-          - financial year
+        description: Coles fiscal year (starts July 1).
         expr: fiscal_year
         data_type: "NUMBER(38,0)"
         access_modifier: public_access
       - name: IS_BUSINESS_DAY
-        synonyms:
-          - business day
-          - working day
+        description: TRUE if weekday and not a holiday.
         expr: is_business_day
         data_type: BOOLEAN
         access_modifier: public_access
       - name: IS_HOLIDAY
-        synonyms:
-          - holiday
-          - public holiday
+        description: TRUE if Australian public holiday.
         expr: is_holiday
         data_type: BOOLEAN
         access_modifier: public_access
       - name: IS_WEEKEND
-        synonyms:
-          - weekend
+        description: TRUE if Saturday or Sunday.
         expr: is_weekend
         data_type: BOOLEAN
         access_modifier: public_access
       - name: MONTH_NAME
-        synonyms:
-          - month
+        description: "Abbreviated month: Jan, Feb, Mar, etc."
         expr: month_name
         data_type: VARCHAR(10)
         access_modifier: public_access
       - name: QUARTER_NAME
-        synonyms:
-          - quarter
+        description: "Quarter: Q1, Q2, Q3, Q4."
         expr: quarter_name
         data_type: VARCHAR(6)
         access_modifier: public_access
       - name: SEASON
+        description: "Southern hemisphere: Summer, Autumn, Winter, Spring."
         expr: season
         data_type: VARCHAR(10)
         access_modifier: public_access
       - name: WEEK_OF_YEAR
-        synonyms:
-          - week number
-          - week
+        description: ISO week number 1-52.
         expr: week_of_year
         data_type: "NUMBER(38,0)"
         access_modifier: public_access
       - name: YEAR_MONTH
-        synonyms:
-          - month year
-          - period
-          - year month
+        description: "Period code P[YYYY][MM]. Use sale_period for user-facing month grouping."
         expr: PRD_CDE
         data_type: VARCHAR(7)
         access_modifier: public_access
       - name: YEAR_NUMBER
-        synonyms:
-          - year
+        description: Four-digit calendar year.
         expr: year_number
         data_type: "NUMBER(38,0)"
         access_modifier: public_access
       - name: YEAR_QUARTER
-        synonyms:
-          - quarter year
+        description: "Year-quarter, e.g. 2026-Q1."
         expr: year_quarter
         data_type: VARCHAR(7)
         access_modifier: public_access
 relationships:
-  - name: '"SYS_RELATIONSHIP_26056ba4-d236-425f-b0cb-e255c8e8ad63"'
+  - name: '"SYS_RELATIONSHIP_afebc2f9-e76e-467c-8dae-39c62397af5f"'
     left_table: INVENTORY_ALERTS
     right_table: STORES
     relationship_columns:
       - left_column: STORE_ID
         right_column: LOC_ID
-  - name: '"SYS_RELATIONSHIP_4154ba05-51b3-4c0e-b559-0bbfa17d1ee2"'
+  - name: '"SYS_RELATIONSHIP_37305e52-d50a-4607-a769-54e2a6a7d051"'
+    left_table: REVIEWS
+    right_table: PRODUCTS
+    relationship_columns:
+      - left_column: PRODUCT_ID
+        right_column: MERCH_ID
+  - name: '"SYS_RELATIONSHIP_5ae08398-c51c-443f-90f3-04f3b2d2743f"'
+    left_table: REVIEWS
+    right_table: STORES
+    relationship_columns:
+      - left_column: STORE_ID
+        right_column: LOC_ID
+  - name: '"SYS_RELATIONSHIP_ab724279-a2db-406c-be42-0aed185b98f0"'
     left_table: REVIEWS
     right_table: TIME_DIM
     relationship_columns:
       - left_column: REVIEW_DATE
         right_column: DATE_KEY
-  - name: '"SYS_RELATIONSHIP_6736dfcc-2b47-4aaa-806b-778d93f3cfac"'
-    left_table: REVIEWS
-    right_table: PRODUCTS
-    relationship_columns:
-      - left_column: PRODUCT_ID
-        right_column: MERCH_ID
-  - name: '"SYS_RELATIONSHIP_fabfbd5f-104a-4761-9b7e-ad0e42f99074"'
-    left_table: REVIEWS
-    right_table: STORES
-    relationship_columns:
-      - left_column: STORE_ID
-        right_column: LOC_ID
-  - name: '"SYS_RELATIONSHIP_63050eac-dd96-4d98-8083-0696add25c0c"'
+  - name: '"SYS_RELATIONSHIP_06269d95-52a7-4f1f-8af3-d093c96ccb68"'
     left_table: REVIEW_SENTIMENT
     right_table: PRODUCTS
     relationship_columns:
       - left_column: PRODUCT_ID
         right_column: MERCH_ID
-  - name: '"SYS_RELATIONSHIP_a11c558c-30ed-493a-91dd-b2dbc402098b"'
+  - name: '"SYS_RELATIONSHIP_3ba86064-c67d-41a6-b763-a38f44e4be5f"'
     left_table: REVIEW_SENTIMENT
     right_table: REVIEWS
     relationship_columns:
       - left_column: REVIEW_ID
         right_column: REVIEW_ID
-  - name: '"SYS_RELATIONSHIP_b0c37437-f774-4852-9d0d-40dff7aadc16"'
+  - name: '"SYS_RELATIONSHIP_dbbafbc5-f02d-4b70-9c5c-ee25b2a48313"'
     left_table: REVIEW_SENTIMENT
     right_table: STORES
     relationship_columns:
       - left_column: STORE_ID
         right_column: LOC_ID
-  - name: '"SYS_RELATIONSHIP_2d5d1945-c2a5-4358-b0cc-6a1f461edc8d"'
+  - name: '"SYS_RELATIONSHIP_1c19a899-2b15-4185-9ffb-05792745fcf2"'
     left_table: SALES
     right_table: TIME_DIM
     relationship_columns:
       - left_column: INV_DT
         right_column: DATE_KEY
-  - name: '"SYS_RELATIONSHIP_b024f99d-5deb-4771-8ad4-494f8a4575cf"'
-    left_table: SALES
-    right_table: PRODUCTS
-    relationship_columns:
-      - left_column: MERCH_ID
-        right_column: MERCH_ID
-  - name: '"SYS_RELATIONSHIP_b84f5dd6-8d90-4dc5-8ee7-065121202b07"'
+  - name: '"SYS_RELATIONSHIP_9c112f6e-a9e9-4b16-8050-2872cb43530b"'
     left_table: SALES
     right_table: STORES
     relationship_columns:
       - left_column: LOC_ID
         right_column: LOC_ID
-  - name: '"SYS_RELATIONSHIP_a4bf3eb3-0d47-417b-9d06-dae6730b99d7"'
-    left_table: STORE_PERFORMANCE
-    right_table: TIME_DIM
+  - name: '"SYS_RELATIONSHIP_c5309494-78f2-4e3d-bfe4-7741ca4ea089"'
+    left_table: SALES
+    right_table: PRODUCTS
     relationship_columns:
-      - left_column: PERFORMANCE_DATE
-        right_column: DATE_KEY
-  - name: '"SYS_RELATIONSHIP_c7ac8d33-ba4c-4a6c-8fec-7269896f91ff"'
+      - left_column: MERCH_ID
+        right_column: MERCH_ID
+  - name: '"SYS_RELATIONSHIP_098ad401-73f9-47c1-abe6-1c43e03e58e5"'
     left_table: STORE_PERFORMANCE
     right_table: STORES
     relationship_columns:
       - left_column: STORE_ID
         right_column: LOC_ID
-  - name: '"SYS_RELATIONSHIP_26756e13-fc57-40e7-b336-960b0b71da66"'
+  - name: '"SYS_RELATIONSHIP_c918ea66-a00b-4342-915f-d7e2f91bb169"'
+    left_table: STORE_PERFORMANCE
+    right_table: TIME_DIM
+    relationship_columns:
+      - left_column: PERFORMANCE_DATE
+        right_column: DATE_KEY
+  - name: '"SYS_RELATIONSHIP_d2c350b2-d52d-498d-95dd-eb95ca7fb9dd"'
     left_table: SUPPORT_TICKETS
     right_table: STORES
     relationship_columns:
       - left_column: STORE_ID
         right_column: LOC_ID
 module_custom_instructions:
-  sql_generation: |2
-
-    IMPORTANT - Revenue Definitions:
-    - "sales", "revenue", "net sales", "total sales" - always use the revenue metric which maps to SUM(total_sales) i.e. SUM(NET_AMT)
-    - NET_AMT is the final net amount AFTER all discounts are applied. Do NOT subtract DISC_AMT from NET_AMT.
-    - DISC_AMT is a breakdown field showing how much discount was included in computing NET_AMT. It is NOT an additional deduction.
-    - For gross revenue before discounts, use SUM(NET_AMT + DISC_AMT)
-    - NEVER generate SUM(NET_AMT - DISC_AMT) - this double-counts the discount deduction and produces incorrect results.
-
-    IMPORTANT - Store Naming Convention:
-    - Sales data uses: stores.store_name / LOC_NM (e.g., "Coles Melbourne CBD")
-    - Review data uses: reviews.store_location (e.g., "Melbourne CBD")
-    - When user asks about "Melbourne CBD" for reviews/sentiment, use store_location dimension
-    - When user asks about "Coles Melbourne CBD" or sales, use store_name dimension
-    - To join sales with reviews by location, match on LOC_ID / STORE_ID
-
-    When asked about monthly sales trends or sales by month:
-    - Always use sale_period dimension (format YYYY-MM) for grouping
-    - Always include both revenue metric AND total_transactions metric
-    - Order by sale_period ascending for chronological display
-
-    When asked about dairy sales or dairy trends:
-    - Filter by category = 'Dairy'
-    - Include total_transactions to show volume alongside revenue
-
-    When asked about sales by store:
-    - Use store_name dimension from stores table
-    - Include total_transactions metric
-
-    When asked about sentiment or customer feedback:
-    - Use review_sentiment table for sentiment analysis
-    - sentiment_category dimension includes: product_quality, value, freshness, service, store_cleanliness, parking
-    - sentiment dimension includes: positive, negative, neutral, mixed, unknown
-    - Use positive_count, negative_count, neutral_count metrics for counts
-    - Always show sentiment breakdown by sentiment_category (aspect) for detailed insights
-    - Include review_text dimension to show the actual customer feedback
-
-    When asked about negative sentiment or problems:
-    - Filter by sentiment = 'negative'
-    - Group by sentiment_category to identify problem areas
-    - Include product_name, store_name, review_text for drill-down
-
-    When asked about sentiment trends over time:
-    - Use review_month dimension for time-based grouping
-    - Show positive_count and negative_count to track changes
-    - Order by review_month ascending
-
-    VERIFIED QUERY EXAMPLES:
-
-    Q: "Show me monthly sales trend for the last 6 months"
-    A: SELECT sale_period, month_name, revenue, units_sold FROM sales WHERE transaction_date >= DATEADD(month, -6, CURRENT_DATE()) ORDER BY sale_period
-
-    Q: "Which stores have the highest sales?"
-    A: SELECT store_name, city_name, state, revenue, units_sold, total_profit FROM sales JOIN stores ON sales.LOC_ID = stores.LOC_ID WHERE transaction_date >= DATEADD(month, -3, CURRENT_DATE()) GROUP BY store_name, city_name, state ORDER BY revenue DESC LIMIT 10
-
-    Q: "What are the best selling products?"
-    A: SELECT product_name, category, revenue, units_sold FROM sales JOIN products ON sales.MERCH_ID = products.MERCH_ID WHERE transaction_date >= DATEADD(month, -1, CURRENT_DATE()) GROUP BY product_name, category ORDER BY revenue DESC LIMIT 10
-
-    Q: "What are dairy sales by store for the last 3 months?"
-    A: SELECT store_name, sale_period, revenue, units_sold FROM sales JOIN stores ON sales.LOC_ID = stores.LOC_ID JOIN products ON sales.MERCH_ID = products.MERCH_ID WHERE category = 'Dairy' AND transaction_date >= DATEADD(month, -3, CURRENT_DATE()) GROUP BY store_name, sale_period ORDER BY store_name, sale_period
-
-    Q: "What is the sentiment breakdown for dairy products?"
-    A: SELECT sentiment_category, positive_count, negative_count, neutral_count FROM review_sentiment WHERE product_category = 'Dairy' GROUP BY sentiment_category ORDER BY negative_count DESC
-
-    Q: "Which stores have the most negative reviews?"
-    A: SELECT store_location, product_category, negative_count FROM review_sentiment WHERE sentiment = 'negative' GROUP BY store_location, product_category ORDER BY negative_count DESC LIMIT 10
-
-    Q: "Compare sales across customer segments"
-    A: SELECT customer_segment, revenue, units_sold FROM sales WHERE transaction_date >= DATEADD(month, -3, CURRENT_DATE()) GROUP BY customer_segment ORDER BY revenue DESC
-
-    Q: "Compare Metro vs Regional store performance"
-    A: SELECT store_type, state, revenue, units_sold, total_profit FROM sales JOIN stores ON sales.LOC_ID = stores.LOC_ID WHERE transaction_date >= DATEADD(month, -3, CURRENT_DATE()) GROUP BY store_type, state ORDER BY revenue DESC
+  sql_generation: "Revenue = SUM(NET_AMT). NET_AMT is AFTER discounts. Do NOT subtract DISC_AMT. For gross revenue use SUM(NET_AMT + DISC_AMT). NEVER generate SUM(NET_AMT - DISC_AMT). If no date filter specified, default to last 3 months. Always order time-series by sale_period ascending. Sales use store_name (LOC_NM) e.g. \"Coles Melbourne CBD\". Reviews use store_location e.g. \"Melbourne CBD\". Join on LOC_ID = STORE_ID. Always group sentiment by sentiment_category for per-aspect breakdown."
+  question_categorization: "This covers Coles retail analytics: sales, store performance, reviews, sentiment, inventory, support tickets. Reject questions about employee data, salaries, or PII. Review text questions are answerable via the review_text dimension."
+verified_queries:
+  - name: MONTHLY_SALES_TREND
+    sql: "SELECT sale_period, month_name, revenue, units_sold FROM sales WHERE transaction_date >= DATEADD(month, -6, CURRENT_DATE()) ORDER BY sale_period"
+    question: Show me monthly sales trend for the last 6 months
+    verified_at: 1726185600
+    verified_by: (STEWARD = admin)
+  - name: TOP_STORES
+    sql: "SELECT store_name, city_name, state, revenue, units_sold, total_profit FROM sales JOIN stores ON sales.LOC_ID = stores.LOC_ID WHERE transaction_date >= DATEADD(month, -3, CURRENT_DATE()) GROUP BY store_name, city_name, state ORDER BY revenue DESC LIMIT 10"
+    question: Which stores have the highest sales?
+    verified_at: 1726185600
+    verified_by: (STEWARD = admin)
+  - name: BEST_PRODUCTS
+    sql: "SELECT product_name, category, revenue, units_sold FROM sales JOIN products ON sales.MERCH_ID = products.MERCH_ID WHERE transaction_date >= DATEADD(month, -1, CURRENT_DATE()) GROUP BY product_name, category ORDER BY revenue DESC LIMIT 10"
+    question: What are the best selling products?
+    verified_at: 1726185600
+    verified_by: (STEWARD = admin)
+  - name: DAIRY_BY_STORE
+    sql: "SELECT store_name, sale_period, revenue, units_sold FROM sales JOIN stores ON sales.LOC_ID = stores.LOC_ID JOIN products ON sales.MERCH_ID = products.MERCH_ID WHERE category = 'Dairy' AND transaction_date >= DATEADD(month, -3, CURRENT_DATE()) GROUP BY store_name, sale_period ORDER BY store_name, sale_period"
+    question: What are dairy sales by store for the last 3 months?
+    verified_at: 1726185600
+    verified_by: (STEWARD = admin)
+  - name: DAIRY_SENTIMENT
+    sql: "SELECT sentiment_category, positive_count, negative_count, neutral_count FROM review_sentiment WHERE product_category = 'Dairy' GROUP BY sentiment_category ORDER BY negative_count DESC"
+    question: What is the sentiment breakdown for dairy products?
+    verified_at: 1726185600
+    verified_by: (STEWARD = admin)
+  - name: NEGATIVE_STORES
+    sql: "SELECT store_location, product_category, negative_count FROM review_sentiment WHERE sentiment = 'negative' GROUP BY store_location, product_category ORDER BY negative_count DESC LIMIT 10"
+    question: Which stores have the most negative reviews?
+    verified_at: 1726185600
+    verified_by: (STEWARD = admin)
+  - name: SEGMENT_COMPARISON
+    sql: "SELECT customer_segment, revenue, units_sold FROM sales WHERE transaction_date >= DATEADD(month, -3, CURRENT_DATE()) GROUP BY customer_segment ORDER BY revenue DESC"
+    question: Compare sales across customer segments
+    verified_at: 1726185600
+    verified_by: (STEWARD = admin)
+  - name: STORE_FORMAT
+    sql: "SELECT store_type, state, revenue, units_sold, total_profit FROM sales JOIN stores ON sales.LOC_ID = stores.LOC_ID WHERE transaction_date >= DATEADD(month, -3, CURRENT_DATE()) GROUP BY store_type, state ORDER BY revenue DESC"
+    question: Compare Metro vs Regional store performance
+    verified_at: 1726185600
+    verified_by: (STEWARD = admin)

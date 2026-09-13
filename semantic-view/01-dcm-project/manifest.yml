@@ -11,6 +11,12 @@ targets:
     project_owner: ACCOUNTADMIN
     templating_config: DEV
 
+  test:
+    account_identifier: SFPSCOGS-RAGRAWAL_AZURE_BCDEMO
+    project_name: COLES_RETAIL_DB_TEST.PROJECTS.COLES_RETAIL_SV_PROJECT
+    project_owner: ACCOUNTADMIN
+    templating_config: TEST
+
   prod:
     account_identifier: SFPSCOGS-RAGRAWAL_AZURE_BCDEMO
     project_name: COLES_RETAIL_DB_PROD.PROJECTS.COLES_RETAIL_SV_PROJECT
@@ -24,5 +30,7 @@ templating:
   configurations:
     DEV:
       env_suffix: "_DEV"
+    TEST:
+      env_suffix: "_TEST"
     PROD:
       env_suffix: "_PROD"
