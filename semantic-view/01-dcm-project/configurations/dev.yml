@@ -1,0 +1,2 @@
+variables:
+  env_suffix: "_DEV"

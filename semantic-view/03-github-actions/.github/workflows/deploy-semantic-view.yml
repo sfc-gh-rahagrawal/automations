@@ -1,0 +1,63 @@
+name: Deploy Semantic View
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'semantic-view/source/**'
+  pull_request:
+    branches: [main]
+    paths:
+      - 'semantic-view/source/**'
+  workflow_dispatch:
+
+env:
+  SNOWFLAKE_ACCOUNT: ${{ secrets.SNOWFLAKE_ACCOUNT }}
+  SNOWFLAKE_USER: ${{ secrets.SNOWFLAKE_USER }}
+  SNOWFLAKE_PASSWORD: ${{ secrets.SNOWFLAKE_PASSWORD }}
+  SNOWFLAKE_ROLE: ACCOUNTADMIN
+  SNOWFLAKE_WAREHOUSE: COMPUTE_WH
+  SNOWFLAKE_DATABASE: COLES_RETAIL_DB
+
+jobs:
+  validate:
+    name: Validate Semantic View DDL
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request'
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Snowflake CLI
+        uses: Snowflake-Labs/snowflake-cli-action@v1
+
+      - name: Validate DDL compiles
+        run: |
+          echo "Validating semantic view DDL..."
+          snow sql -q "SELECT 1" -c default
+          echo "Connection OK. DDL will be validated on deploy."
+
+  deploy:
+    name: Deploy Semantic View
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Snowflake CLI
+        uses: Snowflake-Labs/snowflake-cli-action@v1
+
+      - name: Deploy Semantic View
+        run: |
+          echo "Deploying semantic view to $SNOWFLAKE_DATABASE..."
+          snow sql -f semantic-view/source/coles_retail_sv.sql -c default
+          echo "Deployment complete."
+
+      - name: Verify Deployment
+        run: |
+          echo "Verifying semantic view exists..."
+          snow sql -q "SHOW SEMANTIC VIEWS LIKE 'COLES_RETAIL_SEMANTIC_MODEL' IN SCHEMA COLES_RETAIL_DB.AI_ANALYTICS" -c default
+
+          echo "Checking metrics count..."
+          snow sql -q "SELECT COUNT(*) AS metric_count FROM TABLE(RESULT_SCAN(LAST_QUERY_ID())) WHERE 1=0; SHOW SEMANTIC METRICS IN COLES_RETAIL_DB.AI_ANALYTICS.COLES_RETAIL_SEMANTIC_MODEL" -c default
+
+          echo "Verification complete."

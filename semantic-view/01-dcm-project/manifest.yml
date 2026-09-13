@@ -1,0 +1,5 @@
+definition_version: "2"
+name: coles_retail_semantic_view
+description: >
+  DCM project for automated deployment of the Coles Retail Semantic View.
+  Supports multi-environment deployment via Jinja templating.
