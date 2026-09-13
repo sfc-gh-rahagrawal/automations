@@ -1,30 +1,34 @@
-create or replace semantic view COLES_RETAIL_DB.AI_ANALYTICS.COLES_RETAIL_SEMANTIC_MODEL
+-- DCM Project: Coles Retail Semantic View
+-- Uses Jinja variable {{env_suffix}} for multi-environment deployment
+-- Deploy: snow dcm deploy --target dev|prod
+
+DEFINE SEMANTIC VIEW COLES_RETAIL_DB{{env_suffix}}.AI_ANALYTICS.COLES_RETAIL_SEMANTIC_MODEL
 tables (
-TIME_DIM as COLES_RETAIL_DB.CORE.DIM_TIME primary key (DATE_KEY) with synonyms=('date','calendar','time'),
-STORES as COLES_RETAIL_DB.AI_ANALYTICS.V_STORES primary key (LOC_ID) with synonyms=('store','location','branch'),
-PRODUCTS as COLES_RETAIL_DB.AI_ANALYTICS.V_PRODUCT_MASTER primary key (MERCH_ID) with synonyms=('product','item'),
-SUPPLIERS as COLES_RETAIL_DB.SUPPLY_CHAIN.DIM_SUPPLIERS primary key (SUPPLIER_ID) with synonyms=('supplier','vendor'),
-SALES as COLES_RETAIL_DB.RETAIL.FACT_SALES_TRANSACTIONS primary key (TXN_ID) with synonyms=('transactions','orders'),
-STORE_PERFORMANCE as COLES_RETAIL_DB.RETAIL.FACT_DAILY_STORE_PERFORMANCE primary key (PERFORMANCE_ID),
-REVIEWS as COLES_RETAIL_DB.MARKETING.FACT_CUSTOMER_REVIEWS primary key (REVIEW_ID) with synonyms=('feedback','ratings'),
-REVIEW_SENTIMENT as COLES_RETAIL_DB.MARKETING.REVIEWS_SENTIMENT_CATEGORIES primary key (REVIEW_ID,SENTIMENT_CATEGORY) with synonyms=('sentiment','customer sentiment','review sentiment'),
-INVENTORY_ALERTS as COLES_RETAIL_DB.SUPPLY_CHAIN.FACT_INVENTORY_ALERTS primary key (ALERT_ID),
-SUPPORT_TICKETS as COLES_RETAIL_DB.MARKETING.FACT_SUPPORT_TICKETS primary key (TICKET_ID) with synonyms=('complaints','tickets')
+TIME_DIM as COLES_RETAIL_DB{{env_suffix}}.CORE.DIM_TIME primary key (DATE_KEY) with synonyms=('date','calendar','time'),
+STORES as COLES_RETAIL_DB{{env_suffix}}.AI_ANALYTICS.V_STORES primary key (LOC_ID) with synonyms=('store','location','branch'),
+PRODUCTS as COLES_RETAIL_DB{{env_suffix}}.AI_ANALYTICS.V_PRODUCT_MASTER primary key (MERCH_ID) with synonyms=('product','item'),
+SUPPLIERS as COLES_RETAIL_DB{{env_suffix}}.SUPPLY_CHAIN.DIM_SUPPLIERS primary key (SUPPLIER_ID) with synonyms=('supplier','vendor'),
+SALES as COLES_RETAIL_DB{{env_suffix}}.RETAIL.FACT_SALES_TRANSACTIONS primary key (TXN_ID) with synonyms=('transactions','orders'),
+STORE_PERFORMANCE as COLES_RETAIL_DB{{env_suffix}}.RETAIL.FACT_DAILY_STORE_PERFORMANCE primary key (PERFORMANCE_ID),
+REVIEWS as COLES_RETAIL_DB{{env_suffix}}.MARKETING.FACT_CUSTOMER_REVIEWS primary key (REVIEW_ID) with synonyms=('feedback','ratings'),
+REVIEW_SENTIMENT as COLES_RETAIL_DB{{env_suffix}}.MARKETING.REVIEWS_SENTIMENT_CATEGORIES primary key (REVIEW_ID,SENTIMENT_CATEGORY) with synonyms=('sentiment','customer sentiment','review sentiment'),
+INVENTORY_ALERTS as COLES_RETAIL_DB{{env_suffix}}.SUPPLY_CHAIN.FACT_INVENTORY_ALERTS primary key (ALERT_ID),
+SUPPORT_TICKETS as COLES_RETAIL_DB{{env_suffix}}.MARKETING.FACT_SUPPORT_TICKETS primary key (TICKET_ID) with synonyms=('complaints','tickets')
 )
 relationships (
-SALES(MERCH_ID) references PRODUCTS(MERCH_ID),
-SALES(LOC_ID) references STORES(LOC_ID),
-SALES(INV_DT) references TIME_DIM(DATE_KEY),
-STORE_PERFORMANCE(STORE_ID) references STORES(LOC_ID),
-STORE_PERFORMANCE(PERFORMANCE_DATE) references TIME_DIM(DATE_KEY),
-REVIEWS(PRODUCT_ID) references PRODUCTS(MERCH_ID),
-REVIEWS(STORE_ID) references STORES(LOC_ID),
-REVIEWS(REVIEW_DATE) references TIME_DIM(DATE_KEY),
-REVIEW_SENTIMENT(PRODUCT_ID) references PRODUCTS(MERCH_ID),
-REVIEW_SENTIMENT(REVIEW_ID) references REVIEWS(REVIEW_ID),
-REVIEW_SENTIMENT(STORE_ID) references STORES(LOC_ID),
-INVENTORY_ALERTS(STORE_ID) references STORES(LOC_ID),
-SUPPORT_TICKETS(STORE_ID) references STORES(LOC_ID)
+SALES_TO_PRODUCTS AS SALES(MERCH_ID) references PRODUCTS(MERCH_ID),
+SALES_TO_STORES AS SALES(LOC_ID) references STORES(LOC_ID),
+SALES_TO_TIME AS SALES(INV_DT) references TIME_DIM(DATE_KEY),
+PERF_TO_STORES AS STORE_PERFORMANCE(STORE_ID) references STORES(LOC_ID),
+PERF_TO_TIME AS STORE_PERFORMANCE(PERFORMANCE_DATE) references TIME_DIM(DATE_KEY),
+REVIEWS_TO_PRODUCTS AS REVIEWS(PRODUCT_ID) references PRODUCTS(MERCH_ID),
+REVIEWS_TO_STORES AS REVIEWS(STORE_ID) references STORES(LOC_ID),
+REVIEWS_TO_TIME AS REVIEWS(REVIEW_DATE) references TIME_DIM(DATE_KEY),
+SENTIMENT_TO_PRODUCTS AS REVIEW_SENTIMENT(PRODUCT_ID) references PRODUCTS(MERCH_ID),
+SENTIMENT_TO_REVIEWS AS REVIEW_SENTIMENT(REVIEW_ID) references REVIEWS(REVIEW_ID),
+SENTIMENT_TO_STORES AS REVIEW_SENTIMENT(STORE_ID) references STORES(LOC_ID),
+ALERTS_TO_STORES AS INVENTORY_ALERTS(STORE_ID) references STORES(LOC_ID),
+TICKETS_TO_STORES AS SUPPORT_TICKETS(STORE_ID) references STORES(LOC_ID)
 )
 facts (
 SALES.TOTAL_SALES as NET_AMT with synonyms=('revenue','sales amount'),
@@ -90,4 +94,5 @@ REVIEW_SENTIMENT.MIXED_COUNT as COUNT(CASE WHEN review_sentiment.sentiment = 'mi
 REVIEW_SENTIMENT.SENTIMENT_COUNT as COUNT(review_sentiment.REVIEW_ID) with synonyms=('total sentiment reviews'),
 STORE_PERFORMANCE.TOTAL_VISITORS as SUM(store_performance.foot_traffic) with synonyms=('visitors')
 )
-comment='Coles Retail semantic view with sentiment analysis for Cortex Analyst';
+comment='Coles Retail semantic view with sentiment analysis for Cortex Analyst'
+COPY GRANTS;

@@ -1,5 +1,28 @@
-definition_version: "2"
-name: coles_retail_semantic_view
-description: >
-  DCM project for automated deployment of the Coles Retail Semantic View.
-  Supports multi-environment deployment via Jinja templating.
+manifest_version: 2
+
+type: DCM_PROJECT
+
+default_target: dev
+
+targets:
+  dev:
+    account_identifier: SFPSCOGS-RAGRAWAL_AZURE_BCDEMO
+    project_name: COLES_RETAIL_DB.PROJECTS.COLES_RETAIL_SV_PROJECT
+    project_owner: ACCOUNTADMIN
+    templating_config: DEV
+
+  prod:
+    account_identifier: SFPSCOGS-RAGRAWAL_AZURE_BCDEMO
+    project_name: COLES_RETAIL_DB_PROD.PROJECTS.COLES_RETAIL_SV_PROJECT
+    project_owner: ACCOUNTADMIN
+    templating_config: PROD
+
+templating:
+  defaults:
+    env_suffix: ""
+
+  configurations:
+    DEV:
+      env_suffix: "_DEV"
+    PROD:
+      env_suffix: "_PROD"
