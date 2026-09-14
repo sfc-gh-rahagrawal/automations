@@ -4,11 +4,11 @@ on:
   push:
     branches: [main]
     paths:
-      - 'semantic-view/source/**'
+      - 'source/**'
   pull_request:
     branches: [main]
     paths:
-      - 'semantic-view/source/**'
+      - 'source/**'
   workflow_dispatch:
 
 env:
@@ -49,7 +49,7 @@ jobs:
       - name: Deploy Semantic View
         run: |
           echo "Deploying semantic view to $SNOWFLAKE_DATABASE..."
-          snow sql -f semantic-view/source/coles_retail_sv.sql -c default
+          snow sql -f source/coles_retail_sv.sql -c default
           echo "Deployment complete."
 
       - name: Verify Deployment
